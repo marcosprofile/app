@@ -14,8 +14,11 @@ import {
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { Pagination } from "./components/pagination";
 import { useSearchParams } from "react-router-dom";
-import { useState } from 'react'
+import { useState } from "react";
 import { Tabs } from "./components/tabs";
+
+import * as Dialog from "@radix-ui/react-dialog";
+import { CreateTagForm } from "./components/create-tag-form";
 
 export interface TagResponse {
   first: number;
@@ -35,11 +38,11 @@ export interface Tag {
 
 export function App() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const urlFilter = searchParams.get('filter') ?? ''
-  
-  const [filter, setFilter] = useState(urlFilter)
+  const urlFilter = searchParams.get("filter") ?? "";
 
-  const page = searchParams.get('page') ? Number(searchParams.get('page')) : 1
+  const [filter, setFilter] = useState(urlFilter);
+
+  const page = searchParams.get("page") ? Number(searchParams.get("page")) : 1;
 
   const { data: tagsResponse, isLoading } = useQuery<TagResponse>({
     queryKey: ["get-tags", urlFilter, page],
@@ -49,20 +52,20 @@ export function App() {
       );
       const data = await response.json();
 
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       return data;
     },
-    placeholderData: keepPreviousData
+    placeholderData: keepPreviousData,
   });
 
   function handleFilter() {
-    setSearchParams(params => {
-      params.set('page', '1')
-      params.set('filter', filter)
+    setSearchParams((params) => {
+      params.set("page", "1");
+      params.set("filter", filter);
 
-      return params
-    })
+      return params;
+    });
   }
 
   if (isLoading) {
@@ -72,16 +75,36 @@ export function App() {
   return (
     <div className="py-10 space-y-8">
       <Header />
-      
+
       <Tabs />
-      
+
       <main className="max-w-6xl mx-auto space-y-5">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold">Tags</h1>
-          <Button variant="primary">
-            <Plus className="size-3" />
-            Create new
-          </Button>
+          <Dialog.Root>
+            <Dialog.Trigger asChild>
+              <Button variant="primary">
+                <Plus className="size-3" />
+                Create new
+              </Button>
+            </Dialog.Trigger>
+
+            <Dialog.Portal>
+              <Dialog.Overlay className="fixed inset-0 bg-black/70" />
+              <Dialog.Content className="fixed p-10 space-y-10 right-0 top-0 bottom-0 h-screen min-w-[320px] bg-zinc-950 border-l border-zinc-900">
+                <div className="space-y-3">
+                  <Dialog.Title className="text-xl font-bold">
+                    Create tag
+                  </Dialog.Title>
+                  <Dialog.Description className="text-sm text-zinc-500">
+                    Tags can be used to group videos about similar concepts.
+                  </Dialog.Description>
+                </div>
+                <CreateTagForm />
+                <Dialog.Close />
+              </Dialog.Content>
+            </Dialog.Portal>
+          </Dialog.Root>
         </div>
 
         <div className="flex items-center justify-between">
@@ -90,7 +113,7 @@ export function App() {
               <Search className="size-3" />
               <Control
                 placeholder="Search tags..."
-                onChange={e => setFilter(e.target.value)}
+                onChange={(e) => setFilter(e.target.value)}
                 value={filter}
               />
             </Input>
